@@ -3,13 +3,19 @@ package mizdooni.model;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -40,6 +46,11 @@ public class RestaurantTest {
     private Table make_random_table()
     {
         return new Table(1, restaurant.getId(), 10);
+    }
+
+    private Table make_random_table(int seatsNumber)
+    {
+        return new Table(1, restaurant.getId(), seatsNumber);
     }
 
     @Test
@@ -90,4 +101,35 @@ public class RestaurantTest {
         assertTrue(reviews.isEmpty());
     }
 
+    @Test
+    public void getMaxSeatsNumber_When_NoTable_Then_Zero()
+    {
+        assertEquals(0, restaurant.getMaxSeatsNumber());
+    }
+
+    static Stream<Arguments> generateTableSeatsNumber() {
+        return Stream.of(
+                Arguments.of(Arrays.asList(1, 7, 2, 5), 7),
+                Arguments.of(Arrays.asList(8, 8, 8), 8)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("generateTableSeatsNumber")
+    public void getMaxSeatsNumber_When_MoreThanOneTable_Then_Max(List<Integer> seatsNumbers, int max)
+    {
+        for (int s : seatsNumbers)
+        {
+            restaurant.addTable(make_random_table(s));
+        }
+        assertEquals(max, restaurant.getMaxSeatsNumber());
+    }
+
+    @Test
+    public void getMaxSeatsNumber_When_OneTable_Then_TableSeatsNumber()
+    {
+        Table t = make_random_table();
+        restaurant.addTable(t);
+        assertEquals(t.getSeatsNumber(), restaurant.getMaxSeatsNumber());
+    }
 }
