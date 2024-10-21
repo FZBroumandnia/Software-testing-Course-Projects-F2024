@@ -88,8 +88,8 @@ public class RestaurantTest {
         assertTrue(reviews.stream().anyMatch(r -> r.equals(randomReview1)));
     }
 
-    public void addReview_When_TwoReviewFromAUser_Then_LatestOneExist()
-    {
+    @Test
+    public void addReview_When_TwoReviewFromAUser_Then_LatestOneExist() {
         restaurant.addReview(randomReview1);
         restaurant.addReview(randomReview2);
         List<Review> reviews = restaurant.getReviews();
@@ -143,7 +143,7 @@ public class RestaurantTest {
                 Arguments.of(new Rating[]{}, setRating(new Rating(), 0, 0, 0, 0)),
 
                 Arguments.of(new Rating[]{
-                        setRating(new Rating(), 4, 5, 3, 4)},
+                                setRating(new Rating(), 4, 5, 3, 4)},
                         setRating(new Rating(), 4, 5, 3, 4)
                 ),
 

@@ -8,12 +8,14 @@ import org.mockito.Mock;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.*;
+
 import java.util.stream.Stream;
 
 public class UserTest {
@@ -55,12 +57,14 @@ public class UserTest {
 
         assertFalse(user.checkReserved(restaurant));
     }
+
     private static Stream<org.junit.jupiter.params.provider.Arguments> provideReservations() {
         return Stream.of(
                 org.junit.jupiter.params.provider.Arguments.of(true, true),
                 org.junit.jupiter.params.provider.Arguments.of(false, false)
         );
     }
+
     @ParameterizedTest
     @MethodSource("provideReservations")
     public void checkReserved_When_Parametrized_Then_Equal(boolean hasReservation, boolean expectedResult) {

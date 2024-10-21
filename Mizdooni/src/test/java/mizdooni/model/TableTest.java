@@ -45,24 +45,20 @@ public class TableTest {
         reservations.forEach(r -> table.addReservation(r));
     }
 
-    private LocalDateTime make_localDateTime(int year, int month, int day, int hour, int minute)
-    {
+    private LocalDateTime make_localDateTime(int year, int month, int day, int hour, int minute) {
         return LocalDateTime.of(LocalDate.of(year, month, day), LocalTime.of(hour, minute));
     }
 
-    private LocalDate give_unreserved_date()
-    {
+    private LocalDate give_unreserved_date() {
         return LocalDate.of(2020, 7, 1);
     }
 
-    private LocalTime give_unreserved_time()
-    {
+    private LocalTime give_unreserved_time() {
         return LocalTime.of(17, 20);
     }
 
     @Test
-    public void addReservation_When_add_then_True()
-    {
+    public void addReservation_When_add_then_True() {
         LocalDateTime date_time = make_localDateTime(2024, 2, 2, 12, 20);
         Reservation r = new Reservation(dummyUser, restaurant, table, date_time);
         table.addReservation(r);
@@ -77,24 +73,21 @@ public class TableTest {
     }
 
     @Test
-    public void isReserved_When_ReserveDateDifferent_Then_False()
-    {
+    public void isReserved_When_ReserveDateDifferent_Then_False() {
         LocalDateTime reserved_date_time = reservations.getFirst().getDateTime();
         LocalDateTime unreserved_date_time = LocalDateTime.of(give_unreserved_date(), reserved_date_time.toLocalTime());
         assertFalse(table.isReserved(unreserved_date_time));
     }
 
     @Test
-    public void isReserved_When_ReserveTimeDifferent_Then_False()
-    {
+    public void isReserved_When_ReserveTimeDifferent_Then_False() {
         LocalDateTime reserved_date_time = reservations.getFirst().getDateTime();
         LocalDateTime unreserved_date_time = LocalDateTime.of(reserved_date_time.toLocalDate(), give_unreserved_time());
         assertFalse(table.isReserved(unreserved_date_time));
     }
 
     @Test
-    public void isReserved_When_ReservationCanceled_Then_False()
-    {
+    public void isReserved_When_ReservationCanceled_Then_False() {
         assertFalse(table.isReserved(canceled_reservation.getDateTime()));
     }
 }
