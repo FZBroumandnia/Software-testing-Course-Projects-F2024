@@ -131,41 +131,41 @@ public class ReviewControllerTest {
         assertEquals(true, response.isSuccess());
     }
 
-//    @Test
-//    void testAddReview_UserNotFound() {
-//        stub_set_up_existing_restaurant();
-//        Map<String, Object> ratingMap = Map.of(
-//                "comment", "comment!",
-//                "rating", Map.of(
-//                        "food", 1,
-//                        "service", 1,
-//                        "ambiance", 1,
-//                        "overall", 1
-//                )
-//        );
-//        try {
-//
-//            when(reviewService.addReview(anyInt(), any(Rating.class), anyString())).thenThrow(new UserNotFound());
-//            reviewController.addReview(existing_restaurant_id(), ratingMap);
-//            fail("Expected UserNotFound to be thrown");
-//        } catch (UserNotFound exception) {
-//            assertEquals(new UserNotFound(), exception);
-//        }
-//        catch (ManagerCannotReview o){
-//            fail("Expected UserNotFound to be thrown");
-//        }
-//        catch (RestaurantNotFound o)
-//        {
-//            fail("Expected UserNotFound to be thrown");
-//        }
-//        catch (InvalidReviewRating o)
-//        {
-//            fail("Expected UserNotFound to be thrown");
-//        }
-//        catch (UserHasNotReserved o)
-//        {
-//            fail("Expected UserNotFound to be thrown");
-//        }
-//        verify(reviewService).addReview(anyInt(), any(Rating.class), anyString());
-//    }
+    @Test
+    void testAddReview_UserNotFound() {
+        stub_set_up_existing_restaurant();
+        Map<String, Object> ratingMap = Map.of(
+                "comment", "comment!",
+                "rating", Map.of(
+                        "food", 1,
+                        "service", 1,
+                        "ambiance", 1,
+                        "overall", 1
+                )
+        );
+        try {
+
+            when(reviewService.addReview(anyInt(), any(Rating.class), anyString())).thenThrow(new UserNotFound());
+            reviewController.addReview(existing_restaurant_id(), ratingMap);
+            fail("Expected UserNotFound to be thrown");
+        } catch (UserNotFound exception) {
+            assertEquals(new UserNotFound(), exception);
+        }
+        catch (ManagerCannotReview o){
+            fail("Expected UserNotFound to be thrown");
+        }
+        catch (RestaurantNotFound o)
+        {
+            fail("Expected UserNotFound to be thrown");
+        }
+        catch (InvalidReviewRating o)
+        {
+            fail("Expected UserNotFound to be thrown");
+        }
+        catch (UserHasNotReserved o)
+        {
+            fail("Expected UserNotFound to be thrown");
+        }
+        verify(reviewService).addReview(anyInt(), any(Rating.class), anyString());
+    }
 }
