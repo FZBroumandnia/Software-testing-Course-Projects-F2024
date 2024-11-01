@@ -59,6 +59,10 @@ public class ReservationControllerTest {
 
     int non_existing_customer_id() { return 1; }
 
+    int existing_reservation_id() { return 1; }
+
+    int non_existing_reservation_id() { return 2; }
+
     String a_valid_date() { return "2020-10-10"; }
 
     void stub_set_up_existing_restaurant() {
@@ -169,4 +173,52 @@ public class ReservationControllerTest {
             fail();
         }
     }
+
+    @Test
+    void getCustomerReservations_When_NonExistingCustomer_Then_UserNotFound()
+    {
+        try{
+            when(reservationService.getCustomerReservations(non_existing_customer_id())).thenThrow(new UserNotFound());
+            reservationController.getCustomerReservations(non_existing_customer_id());
+        }
+        catch (Throwable e)
+        {
+            assertTrue(e.getClass()==ResponseException.class);
+            assertTrue(e.getMessage().equals( "User not found." ));
+        }
+    }
+
+    @Test
+    void getCustomerReservations_When_NoAccessCustomer_Then_UserNoAccess()
+    {
+        try{
+            when(reservationService.getCustomerReservations(existing_customer_id())).thenThrow(new UserNoAccess());
+            reservationController.getCustomerReservations(existing_customer_id());
+        }
+        catch (Throwable e)
+        {
+            System.out.println(e);
+            assertTrue(e.getClass()==ResponseException.class);
+            assertTrue(e.getMessage().equals( "User has no access to this resource." ));
+        }
+    }
+
+    @Test
+    void cancelReservation_When_ValidReservation_Then_success()
+    {
+        try{
+            doNothing().when(reservationService).cancelReservation(existing_reservation_id());
+            Response result =reservationController.cancelReservation(existing_reservation_id());
+            assertEquals(HttpStatus.OK, result.getStatus());
+            assertEquals("reservation cancelled", result.getMessage());
+            assertTrue(result.isSuccess());
+            verify(reservationService).cancelReservation(existing_reservation_id());
+        }
+        catch (Throwable e)
+        {
+            System.out.println(e);
+            fail();
+        }
+    }
+
 }
