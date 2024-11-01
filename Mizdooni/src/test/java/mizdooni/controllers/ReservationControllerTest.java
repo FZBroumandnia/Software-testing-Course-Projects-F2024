@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -64,6 +65,14 @@ public class ReservationControllerTest {
     int non_existing_reservation_id() { return 2; }
 
     String a_valid_date() { return "2020-10-10"; }
+
+    Map<String, String> valid_reservation_params()
+    {
+        return Map.of(
+                "people", "1",
+                "datetime", a_valid_date()+" 00:00"
+            );
+    }
 
     void stub_set_up_existing_restaurant() {
         lenient().when(ExistingRestaurant.getName()).thenReturn("existing restaurant");
@@ -197,7 +206,6 @@ public class ReservationControllerTest {
         }
         catch (Throwable e)
         {
-            System.out.println(e);
             assertTrue(e.getClass()==ResponseException.class);
             assertTrue(e.getMessage().equals( "User has no access to this resource." ));
         }
@@ -221,7 +229,7 @@ public class ReservationControllerTest {
     }
 
     @Test
-    void cancelReservation_When_NoSuchReservationFoeUser_Then_ReservationNotFound()
+    void cancelReservation_When_NoSuchReservationForUser_Then_ReservationNotFound()
     {
         try{
             doThrow(new ReservationNotFound()).when(reservationService).cancelReservation(non_existing_reservation_id());
@@ -243,9 +251,153 @@ public class ReservationControllerTest {
         }
         catch (Throwable e)
         {
-            System.out.println(e);
             assertTrue(e.getClass()==ResponseException.class);
             assertTrue(e.getMessage().equals( "Reservation cannot be cancelled." ));
+        }
+    }
+
+    @Test
+    void addReservation_When_NonExistingRestaurant_Then_NotFound()
+    {
+        ResponseException exception = assertThrows(ResponseException.class, () -> {
+            reservationController.addReservation(non_existing_restaurant_id(), valid_reservation_params());
+        });
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
+        assertEquals("restaurant not found", exception.getMessage());
+        verify(restaurantService).getRestaurant(non_existing_restaurant_id());
+        verifyNoInteractions(reservationService);
+    }
+
+    @Test
+    void addReservation_When_InValidPepoleNum_Then_ParameterBadType()
+    {
+        stub_set_up_existing_restaurant();
+        Map <String, String> InvalidResParams = Map.of(
+                "people", "1!",
+                "datetime", a_valid_date()
+        );
+        ResponseException exception = assertThrows(ResponseException.class, () -> {
+            reservationController.addReservation(existing_restaurant_id(),  InvalidResParams);
+        });
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertEquals("bad parameter type", exception.getMessage());
+    }
+
+    @Test
+    void addReservation_When_InValiReservationDate_Then_ParameterBadType()
+    {
+        stub_set_up_existing_restaurant();
+        Map <String, String> InvalidResParams = Map.of(
+                "people", "1",
+                "datetime", "Invalid Date"
+        );
+        ResponseException exception = assertThrows(ResponseException.class, () -> {
+            reservationController.addReservation(existing_restaurant_id(),  InvalidResParams);
+        });
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertEquals("bad parameter type", exception.getMessage());
+    }
+
+    @Test
+    void addReservation_When_ValidReservation_Then_success() {
+        try {
+            stub_set_up_existing_restaurant();
+            when(reservationService.reserveTable(anyInt(),anyInt(),any())).thenReturn(mockReservation);
+            Response response = reservationController.addReservation(existing_restaurant_id(), valid_reservation_params());
+
+            assertEquals(HttpStatus.OK, response.getStatus());
+            assertEquals("reservation done", response.getMessage());
+            assertTrue(response.isSuccess());
+            assertEquals(mockReservation, response.getData());
+            verify(restaurantService).getRestaurant(existing_restaurant_id());
+        } catch (Throwable e) {
+
+            fail();
+        }
+    }
+
+    @Test
+    void addReservation_When_NonExistingTable_Then_TableNotFound() {
+        try{
+            stub_set_up_existing_restaurant();
+            when(reservationService.reserveTable(anyInt(),anyInt(),any())).thenThrow(new TableNotFound());
+            reservationController.addReservation(existing_restaurant_id(), valid_reservation_params());
+        }
+        catch (Throwable e)
+        {
+            assertTrue(e.getClass()==ResponseException.class);
+            assertTrue(e.getMessage().equals( "Table not found." ));
+        }
+    }
+
+    @Test
+    void addReservation_When_ReservationInCloseTime_Then_ReservationNotInOpenTimes() {
+        try{
+            stub_set_up_existing_restaurant();
+            when(reservationService.reserveTable(anyInt(),anyInt(),any())).thenThrow(new DateTimeInThePast());
+            reservationController.addReservation(existing_restaurant_id(), valid_reservation_params());
+        }
+        catch (Throwable e)
+        {
+            assertTrue(e.getClass()==ResponseException.class);
+            assertTrue(e.getMessage().equals( "Date time is before current time." ));
+        }
+    }
+
+    @Test
+    void addReservation_When_ReservationTimePassed_Then_DateTimeInThePast() {
+        try{
+            stub_set_up_existing_restaurant();
+            when(reservationService.reserveTable(anyInt(),anyInt(),any())).thenThrow(new ReservationNotInOpenTimes());
+            reservationController.addReservation(existing_restaurant_id(), valid_reservation_params());
+        }
+        catch (Throwable e)
+        {
+            assertTrue(e.getClass()==ResponseException.class);
+            assertTrue(e.getMessage().equals( "Reservation hour is not within restaurant's open times." ));
+        }
+    }
+
+    @Test
+    void addReservation_When_NotOnWorkingTimes_Then_InvalidWorkingTime() {
+        try{
+            stub_set_up_existing_restaurant();
+            when(reservationService.reserveTable(anyInt(),anyInt(),any())).thenThrow(new InvalidWorkingTime());
+            reservationController.addReservation(existing_restaurant_id(), valid_reservation_params());
+        }
+        catch (Throwable e)
+        {
+            assertTrue(e.getClass()==ResponseException.class);
+            assertTrue(e.getMessage().equals( "Invalid working time." ));
+        }
+    }
+
+    @Test
+    void addReservation_When_ManagerIsReserving_Then_ManagerReservationNotAllowed() {
+        try{
+            stub_set_up_existing_restaurant();
+            when(reservationService.reserveTable(anyInt(),anyInt(),any())).thenThrow(new ManagerReservationNotAllowed());
+            reservationController.addReservation(existing_restaurant_id(), valid_reservation_params());
+        }
+        catch (Throwable e)
+        {
+            assertTrue(e.getClass()==ResponseException.class);
+            assertTrue(e.getMessage().equals( "Manager cannot reserve tables." ));
+        }
+    }
+
+    @Test
+    void addReservation_When_NotLogeInAccount_Then_UserNotFound() {
+        try{
+            stub_set_up_existing_restaurant();
+            when(reservationService.reserveTable(anyInt(),anyInt(),any())).thenThrow(new UserNotFound());
+            reservationController.addReservation(existing_restaurant_id(), valid_reservation_params());
+        }
+        catch (Throwable e)
+        {
+            assertTrue(e.getClass()==ResponseException.class);
+            assertTrue(e.getMessage().equals( "User not found." ));
         }
     }
 
