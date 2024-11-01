@@ -15,8 +15,11 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +67,12 @@ public class ReservationControllerTest {
 
     int non_existing_reservation_id() { return 2; }
 
+    int a_valid_people_number() { return 10; }
+    int a_invalid_people_number() { return -1; }
+
     String a_valid_date() { return "2020-10-10"; }
+
+    String a_valid_passed_date() { return  a_valid_date(); }
 
     Map<String, String> valid_reservation_params()
     {
@@ -270,7 +278,7 @@ public class ReservationControllerTest {
     }
 
     @Test
-    void addReservation_When_InValidPepoleNum_Then_ParameterBadType()
+    void addReservation_When_InValidPeopleNum_Then_ParameterBadType()
     {
         stub_set_up_existing_restaurant();
         Map <String, String> InvalidResParams = Map.of(
@@ -285,7 +293,7 @@ public class ReservationControllerTest {
     }
 
     @Test
-    void addReservation_When_InValiReservationDate_Then_ParameterBadType()
+    void addReservation_When_InValidReservationDate_Then_ParameterBadType()
     {
         stub_set_up_existing_restaurant();
         Map <String, String> InvalidResParams = Map.of(
@@ -332,7 +340,7 @@ public class ReservationControllerTest {
     }
 
     @Test
-    void addReservation_When_ReservationInCloseTime_Then_ReservationNotInOpenTimes() {
+    void addReservation_When_ReservationTimePassed_Then_DateTimeInThePast() {
         try{
             stub_set_up_existing_restaurant();
             when(reservationService.reserveTable(anyInt(),anyInt(),any())).thenThrow(new DateTimeInThePast());
@@ -346,7 +354,7 @@ public class ReservationControllerTest {
     }
 
     @Test
-    void addReservation_When_ReservationTimePassed_Then_DateTimeInThePast() {
+    void  addReservation_When_ReservationInCloseTime_Then_ReservationNotInOpenTimes(){
         try{
             stub_set_up_existing_restaurant();
             when(reservationService.reserveTable(anyInt(),anyInt(),any())).thenThrow(new ReservationNotInOpenTimes());
@@ -398,6 +406,75 @@ public class ReservationControllerTest {
         {
             assertTrue(e.getClass()==ResponseException.class);
             assertTrue(e.getMessage().equals( "User not found." ));
+        }
+    }
+
+    @Test
+    void getAvailableTimes_When_NonExistingRestaurant_Then_NotFound()
+    {
+        ResponseException exception = assertThrows(ResponseException.class, () -> {
+            reservationController.getAvailableTimes(non_existing_reservation_id(),  a_valid_people_number(), a_valid_date());
+        });
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
+        assertEquals("restaurant not found", exception.getMessage());
+    }
+
+    @Test
+    void getAvailableTimes_When_InValidDate_Then_ParameterBadType()
+    {
+        stub_set_up_existing_restaurant();
+        ResponseException exception = assertThrows(ResponseException.class, () -> {
+            reservationController.getAvailableTimes(existing_reservation_id(),  a_valid_people_number(), "invalid date");
+        });
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertEquals("bad parameter type", exception.getMessage());
+    }
+
+    @Test
+    void getAvailableTimes_When_ValidParameters_Then_success() {
+        try {
+            stub_set_up_existing_restaurant();
+            List<LocalTime> happy_times = new ArrayList<>(List.of(LocalTime.now(), LocalTime.now()));
+            when(reservationService.getAvailableTimes(anyInt(),anyInt(),any())).thenReturn(happy_times);
+            Response response = reservationController.getAvailableTimes(existing_reservation_id(),  a_valid_people_number(), a_valid_date());
+
+            assertEquals(HttpStatus.OK, response.getStatus());
+            assertEquals("available times", response.getMessage());
+            assertTrue(response.isSuccess());
+            assertEquals(happy_times, response.getData());
+            verify(restaurantService).getRestaurant(existing_restaurant_id());
+        } catch (Throwable e) {
+
+            fail();
+        }
+    }
+
+    @Test
+    void getAvailableTimes_When_DatePassed_Then_DateTimeInThePast() {
+        try{
+            stub_set_up_existing_restaurant();
+            when(reservationService.getAvailableTimes(anyInt(),anyInt(),any())).thenThrow(new DateTimeInThePast());
+            reservationController.getAvailableTimes(existing_reservation_id(),  a_valid_people_number(), a_valid_passed_date());
+        }
+        catch (Throwable e)
+        {
+            assertTrue(e.getClass()==ResponseException.class);
+            assertTrue(e.getMessage().equals( "Date time is before current time." ));
+        }
+    }
+
+    @Test
+    void getAvailableTimes_When_InvalidPeopleNum_Then_BadPeopleNumber() {
+        try{
+            stub_set_up_existing_restaurant();
+            when(reservationService.getAvailableTimes(anyInt(),anyInt(),any())).thenThrow(new DateTimeInThePast());
+            reservationController.getAvailableTimes(existing_reservation_id(),  a_invalid_people_number(), a_valid_passed_date());
+        }
+        catch (Throwable e)
+        {
+            assertTrue(e.getClass()==ResponseException.class);
+            assertTrue(e.getMessage().equals( "Date time is before current time." ));
         }
     }
 
