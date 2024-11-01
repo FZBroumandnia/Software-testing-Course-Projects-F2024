@@ -10,9 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.InjectMocks;
-
 import static org.mockito.Mockito.*;
-
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
@@ -51,6 +49,19 @@ public class ReviewControllerTest {
 
     int non_existing_restaurant_id() {
         return 9;
+    }
+
+    Map<String, Object> make_valid_map_rating()
+    {
+        return Map.of(
+                "comment", "comment!",
+                "rating", Map.of(
+                        "food", 1,
+                        "service", 1,
+                        "ambiance", 1,
+                        "overall", 1
+                )
+        );
     }
 
     Rating make_a_rating() {
@@ -97,7 +108,7 @@ public class ReviewControllerTest {
     }
 
     @Test
-    void getReviews_When_ExistingReview_Then_success() {
+    void getReviews_When_ValidReview_Then_success() {
         try {
             PagedList<Review> pagedList = new PagedList<>(new ArrayList<>(List.of(mockReview)), DEFAULT_PAGE_NUM, 10);
             stub_set_up_existing_restaurant();
@@ -118,12 +129,7 @@ public class ReviewControllerTest {
     @Test
     void addReviews_When_ExistingRestaurant_Then_success() {
         stub_set_up_existing_restaurant();
-        Map<String, Object> ratingMap = Map.of("comment", "comment!", "rating", Map.of(
-                "food", 1,
-                "service", 1,
-                "ambiance", 1,
-                "overall", 1
-        ));
+        Map<String, Object> ratingMap = make_valid_map_rating();
         Response response = reviewController.addReview(existing_restaurant_id(), ratingMap);
 
         assertEquals(HttpStatus.OK, response.getStatus());
@@ -135,9 +141,9 @@ public class ReviewControllerTest {
     void addReview_When_NoRatingMap_Then_ParameterMissing()
     {
         stub_set_up_existing_restaurant();
-        Map<String, Object> ratingMap = Map.of( "s.th", " " , " ",Map.of(" ", 1));
+        Map<String, Object> InValidratingMap = Map.of( "s.th", " " , " ",Map.of(" ", 1));
         ResponseException exception = assertThrows(ResponseException.class, () -> {
-            reviewController.addReview(existing_restaurant_id(), ratingMap);
+            reviewController.addReview(existing_restaurant_id(), InValidratingMap);
         });
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
         assertEquals("parameters missing", exception.getMessage());
@@ -166,17 +172,9 @@ public class ReviewControllerTest {
 //    @Test
 //    void testAddReview_UserNotFound() {
 //        stub_set_up_existing_restaurant();
-//        Map<String, Object> ratingMap = Map.of(
-//                "comment", "comment!",
-//                "rating", Map.of(
-//                        "food", 1,
-//                        "service", 1,
-//                        "ambiance", 1,
-//                        "overall", 1
-//                )
-//        );
+//        Map<String, Object> ratingMap = make_valid_map_rating();
 //        try {
-//        doThrow(new UserNotFound()).when(reviewService).addReview(anyInt(), any(Rating.class), anyString());
+//        when(reviewService.addReview(anyInt(), any(), anyString())).thenThrow();
 //        UserNotFound exception = assertThrows(UserNotFound.class, () -> {
 //            reviewController.addReview(existing_restaurant_id(), ratingMap);
 //        });
