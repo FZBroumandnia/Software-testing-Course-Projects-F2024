@@ -216,8 +216,36 @@ public class ReservationControllerTest {
         }
         catch (Throwable e)
         {
-            System.out.println(e);
             fail();
+        }
+    }
+
+    @Test
+    void cancelReservation_When_NoSuchReservationFoeUser_Then_ReservationNotFound()
+    {
+        try{
+            doThrow(new ReservationNotFound()).when(reservationService).cancelReservation(non_existing_reservation_id());
+            reservationController.cancelReservation(non_existing_reservation_id());
+        }
+        catch (Throwable e)
+        {
+            assertTrue(e.getClass()==ResponseException.class);
+            assertTrue(e.getMessage().equals( "Reservation not found." ));
+        }
+    }
+
+    @Test
+    void cancelReservation_When_ReservationPassed_Then_ReservationCannotBeCancelled()
+    {
+        try{
+            doThrow(new ReservationCannotBeCancelled()).when(reservationService).cancelReservation(existing_reservation_id());
+            reservationController.cancelReservation(existing_reservation_id());
+        }
+        catch (Throwable e)
+        {
+            System.out.println(e);
+            assertTrue(e.getClass()==ResponseException.class);
+            assertTrue(e.getMessage().equals( "Reservation cannot be cancelled." ));
         }
     }
 
