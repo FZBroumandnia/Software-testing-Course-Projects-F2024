@@ -64,7 +64,7 @@ public class ReviewControllerTest {
 
     void stub_set_up_existing_restaurant() {
         lenient().when(ExistingRestaurant.getName()).thenReturn("existing restaurant");
-        when(ExistingRestaurant.getId()).thenReturn(existing_restaurant_id());
+        lenient().when(ExistingRestaurant.getId()).thenReturn(existing_restaurant_id());
         when(restaurantService.getRestaurant(existing_restaurant_id())).thenReturn(ExistingRestaurant);
     }
 
@@ -131,6 +131,38 @@ public class ReviewControllerTest {
         assertEquals(true, response.isSuccess());
     }
 
+    @Test
+    void addReview_When_NoRatingMap_Then_ParameterMissing()
+    {
+        stub_set_up_existing_restaurant();
+        Map<String, Object> ratingMap = Map.of( "s.th", " " , " ",Map.of(" ", 1));
+        ResponseException exception = assertThrows(ResponseException.class, () -> {
+            reviewController.addReview(existing_restaurant_id(), ratingMap);
+        });
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertEquals("parameters missing", exception.getMessage());
+        verifyNoInteractions(reviewService);
+    }
+
+    @Test
+    void addReview_When_InValidRatingTypes_Then_ParameterBadType()
+    {
+        stub_set_up_existing_restaurant();
+        Map<String, Object> ratingMap = Map.of("comment", "comment!", "rating", Map.of(
+                "food", "food type",
+                "service", 1,
+                "ambiance", 1,
+                "overall", 1
+        ));
+        ResponseException exception = assertThrows(ResponseException.class, () -> {
+            reviewController.addReview(existing_restaurant_id(), ratingMap);
+        });
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertEquals("bad parameter type", exception.getMessage());
+        verifyNoInteractions(reviewService);
+    }
+
+
 //    @Test
 //    void testAddReview_UserNotFound() {
 //        stub_set_up_existing_restaurant();
@@ -144,12 +176,13 @@ public class ReviewControllerTest {
 //                )
 //        );
 //        try {
-//
-//            when(reviewService.addReview(anyInt(), any(Rating.class), anyString())).thenThrow(new UserNotFound());
+//        doThrow(new UserNotFound()).when(reviewService).addReview(anyInt(), any(Rating.class), anyString());
+//        UserNotFound exception = assertThrows(UserNotFound.class, () -> {
 //            reviewController.addReview(existing_restaurant_id(), ratingMap);
-//            fail("Expected UserNotFound to be thrown");
-//        } catch (UserNotFound exception) {
-//            assertEquals(new UserNotFound(), exception);
+//        });
+//        fail("Expected UserNotFound to be thrown");
+//        } catch (Throwable e) {
+//        assertEquals(new UserNotFound(), e);
 //        }
 //        catch (ManagerCannotReview o){
 //            fail("Expected UserNotFound to be thrown");
