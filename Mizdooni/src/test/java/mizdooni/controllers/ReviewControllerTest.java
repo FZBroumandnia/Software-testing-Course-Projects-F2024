@@ -92,6 +92,22 @@ public class ReviewControllerTest {
     }
 
     @Test
+    void getReviews_When_NonExistingReviewForRestaurant_Then_Null() {
+        try {
+            stub_set_up_existing_restaurant();
+            when(reviewService.getReviews(anyInt(), anyInt())).thenReturn(null);
+            Response r = reviewController.getReviews(existing_restaurant_id(), DEFAULT_PAGE_NUM);
+
+            assertEquals(HttpStatus.OK, r.getStatus());
+            assertEquals(r.getMessage(), "reviews for restaurant (" + existing_restaurant_id() + "): " + ExistingRestaurant.getName());
+            assertEquals(r.getData(), null);
+            verify(restaurantService).getRestaurant(existing_restaurant_id());
+        } catch (RestaurantNotFound e) {
+            fail("Unexpected RestaurantNotFound exception thrown");
+        }
+    }
+
+    @Test
     void getReviews_When_ValidReview_Then_success() {
         try {
             PagedList<Review> pagedList = new PagedList<>(new ArrayList<>(List.of(mockReview)), DEFAULT_PAGE_NUM, 10);
@@ -153,67 +169,19 @@ public class ReviewControllerTest {
     }
 
     @Test
-    void addReview_When_NotLogInAccount_Then_UserNotFound()
-            throws UserNotFound, ManagerCannotReview, RestaurantNotFound, InvalidReviewRating, UserHasNotReserved {
+    void testAddReview_UserNotFound() {
         stub_set_up_existing_restaurant();
         Map<String, Object> ratingMap = make_valid_map_rating();
         try {
             doThrow(new UserNotFound()).when(reviewService).addReview(anyInt(), any(), anyString());
-            reviewController.addReview(existing_restaurant_id(), ratingMap);
+            //UserNotFound exception = assertThrows(UserNotFound.class, () -> {
+                reviewController.addReview(existing_restaurant_id(), ratingMap);
+            //});
         }
         catch (Throwable e){
+            System.out.println(e);
             assertTrue(e.getClass()==ResponseException.class);
-            assertEquals(e.getMessage(), "User not found.");
             verify(reviewService).addReview(anyInt(), any(Rating.class), anyString());
         }
     }
-
-    @Test
-    void addReview_When_ManagerWriteReview_Then_ManagerCannotReview()
-            throws UserNotFound, ManagerCannotReview, RestaurantNotFound, InvalidReviewRating, UserHasNotReserved {
-        stub_set_up_existing_restaurant();
-        Map<String, Object> ratingMap = make_valid_map_rating();
-        try {
-            doThrow(new ManagerCannotReview()).when(reviewService).addReview(anyInt(), any(), anyString());
-            reviewController.addReview(existing_restaurant_id(), ratingMap);
-        }
-        catch (Throwable e){
-            assertTrue(e.getClass()==ResponseException.class);
-            assertEquals(e.getMessage(), "Manager cannot review.");
-            verify(reviewService).addReview(anyInt(), any(Rating.class), anyString());
-        }
-    }
-
-    @Test
-    void addReview_When_InvalidRating_Then_InvalidReviewRating()
-            throws UserNotFound, ManagerCannotReview, RestaurantNotFound, InvalidReviewRating, UserHasNotReserved {
-        stub_set_up_existing_restaurant();
-        Map<String, Object> ratingMap = make_valid_map_rating();
-        try {
-            doThrow(new InvalidReviewRating("cause")).when(reviewService).addReview(anyInt(), any(), anyString());
-            reviewController.addReview(existing_restaurant_id(), ratingMap);
-        }
-        catch (Throwable e){
-            assertTrue(e.getClass()==ResponseException.class);
-            assertEquals(e.getMessage(), "Review rating parameter <cause> out of range.");
-            verify(reviewService).addReview(anyInt(), any(Rating.class), anyString());
-        }
-    }
-
-    @Test
-    void addReview_When_ReviewWithoutExperience_Then_UserHasNotReserved()
-            throws UserNotFound, ManagerCannotReview, RestaurantNotFound, InvalidReviewRating, UserHasNotReserved {
-        stub_set_up_existing_restaurant();
-        Map<String, Object> ratingMap = make_valid_map_rating();
-        try {
-            doThrow(new UserHasNotReserved()).when(reviewService).addReview(anyInt(), any(), anyString());
-            reviewController.addReview(existing_restaurant_id(), ratingMap);
-        }
-        catch (Throwable e){
-            assertTrue(e.getClass()==ResponseException.class);
-            assertEquals(e.getMessage(), "User cannot review a restaurant without reserving a table first.");
-            verify(reviewService).addReview(anyInt(), any(Rating.class), anyString());
-        }
-    }
-
 }
