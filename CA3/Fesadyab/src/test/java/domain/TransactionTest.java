@@ -13,7 +13,6 @@ public class TransactionTest {
     }
 
     @Test
-    @DisplayName("Test transaction.equals should only compare transaction IDs")
     public void testEqualsComparesTransactionIds() {
         Transaction transaction = new Transaction() {{
             setTransactionId(0);
@@ -25,7 +24,6 @@ public class TransactionTest {
     }
 
     @Test
-    @DisplayName("Test transaction.equals with different transaction IDs")
     public void testEqualsDifferentTransactionIds() {
         Transaction newTransaction = new Transaction() {{
             setTransactionId(1);
@@ -34,14 +32,12 @@ public class TransactionTest {
     }
 
     @Test
-    @DisplayName("Test transaction.equals with object of another type")
     public void testEqualsWrongObject() {
         Object object = new Object();
         Assertions.assertFalse(transaction.equals(object));
     }
 
     @Test
-    @DisplayName("Test transaction getter and setters")
     public void testTransactionGetterSetters() {
         transaction.setTransactionId(1);
         transaction.setAccountId(2);
