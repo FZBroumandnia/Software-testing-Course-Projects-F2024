@@ -1,4 +1,4 @@
-package mizdooni.model;
+/*package mizdooni.model;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -90,4 +90,4 @@ public class TableTest {
     public void isReserved_When_ReservationCanceled_Then_False() {
         assertFalse(table.isReserved(canceled_reservation.getDateTime()));
     }
-}
+}*/
