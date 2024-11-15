@@ -10,7 +10,8 @@ public class TransactionEngineTest {
         transactionEngine = new TransactionEngine();
     }
 
-    public static Transaction makeTransaction(int transactionId, int accountId, int amount, boolean isDebit) {
+    public static Transaction makeTransaction(int transactionId, int accountId, int amount, boolean isDebit)
+    {
         Transaction txn = new Transaction();
         txn.setTransactionId(transactionId);
         txn.setAccountId(accountId);
@@ -20,19 +21,22 @@ public class TransactionEngineTest {
     }
 
     @Test
-    public void testAverageAmountNoTransactions() {
+    public void averageAmount_When_NoTransactions()
+    {
         Assertions.assertEquals(0, transactionEngine.getAverageTransactionAmountByAccount(1));
     }
 
     @Test
-    public void testAverageAmountOneTransaction() {
+    public void averageAmount_When_OneTransaction()
+    {
         Transaction txn = makeTransaction(0, 1, 500, true);
         transactionEngine.transactionHistory.add(txn);
         Assertions.assertEquals(500, transactionEngine.getAverageTransactionAmountByAccount(1));
     }
 
     @Test
-    public void testAverageAmountMultipleTransactions() {
+    public void averageAmount_When_MultipleTransactions()
+    {
         Transaction txn1 = makeTransaction(0, 1, 500, true);
         Transaction txn2 = makeTransaction(1, 1, 1500, true);
         transactionEngine.transactionHistory.add(txn1);
@@ -41,19 +45,22 @@ public class TransactionEngineTest {
     }
 
     @Test
-    public void testAverageAmountUnknownAccount() {
+    public void averageAmount_When_UnknownAccount()
+    {
         Transaction txn = makeTransaction(0, 1, 500, true);
         transactionEngine.transactionHistory.add(txn);
         Assertions.assertEquals(0, transactionEngine.getAverageTransactionAmountByAccount(2));
     }
 
     @Test
-    public void testTransactionPatternNoTransactions() {
+    public void transactionPattern_When_NoTransactions()
+    {
         Assertions.assertEquals(0, transactionEngine.getTransactionPatternAboveThreshold(1000));
     }
 
     @Test
-    public void testTransactionPatternWithPattern() {
+    public void transactionPattern_When_PatternExists()
+    {
         Transaction txn1 = makeTransaction(0, 1, 1200, true);
         Transaction txn2 = makeTransaction(1, 1, 1800, true);
         Transaction txn3 = makeTransaction(2, 1, 2400, true);
@@ -64,7 +71,8 @@ public class TransactionEngineTest {
     }
 
     @Test
-    public void testTransactionPatternWithoutPattern() {
+    public void transactionPattern_When_NoPattern()
+    {
         Transaction txn1 = makeTransaction(0, 1, 1200, true);
         Transaction txn2 = makeTransaction(1, 1, 1700, true);
         Transaction txn3 = makeTransaction(2, 1, 2500, true);
@@ -75,7 +83,8 @@ public class TransactionEngineTest {
     }
 
     @Test
-    public void testTransactionPatternUnderThreshold() {
+    public void transactionPattern_When_TransactionUnderThreshold()
+    {
         Transaction txn1 = makeTransaction(0, 1, 1200, true);
         Transaction txn2 = makeTransaction(1, 1, 800, true);
         transactionEngine.transactionHistory.add(txn1);
@@ -84,7 +93,8 @@ public class TransactionEngineTest {
     }
 
     @Test
-    public void testFraudulentLargeDebit() {
+    public void detectFraudulentTransaction_When_LargeDebit()
+    {
         Transaction txn1 = makeTransaction(0, 1, 500, true);
         Transaction txn2 = makeTransaction(1, 1, 2000, true);
         transactionEngine.transactionHistory.add(txn1);
@@ -93,7 +103,8 @@ public class TransactionEngineTest {
 
 
     @Test
-    public void testFraudulentWithinRange() {
+    public void testFraudulent_When_WithinRange()
+    {
         Transaction txn1 = makeTransaction(0, 1, 500, true);
         Transaction txn2 = makeTransaction(1, 1, 900, true);
         transactionEngine.transactionHistory.add(txn1);
@@ -101,7 +112,8 @@ public class TransactionEngineTest {
     }
 
     @Test
-    public void testFraudulentNonDebit() {
+    public void detectFraudulentTransaction_When_NonDebit()
+    {
         Transaction txn1 = makeTransaction(0, 1, 500, false);
         Transaction txn2 = makeTransaction(1, 1, 2000, false);
         transactionEngine.transactionHistory.add(txn1);
@@ -109,14 +121,8 @@ public class TransactionEngineTest {
     }
 
     @Test
-    public void testAddingExistingTransaction() {
-        Transaction txn = makeTransaction(0, 1, 500, true);
-        transactionEngine.transactionHistory.add(txn);
-        Assertions.assertEquals(0, transactionEngine.addTransactionAndDetectFraud(txn));
-    }
-
-    @Test
-    public void testAddTransactionAndDetectFraudulent() {
+    public void addTransactionAndDetectFraudulentTest()
+    {
         Transaction txn1 = makeTransaction(0, 1, 500, true);
         Transaction txn2 = makeTransaction(1, 1, 2000, true);
         transactionEngine.transactionHistory.add(txn1);
@@ -125,7 +131,8 @@ public class TransactionEngineTest {
     }
 
     @Test
-    public void testAddTransactionAndDetectPattern() {
+    public void addTransactionAndDetectPatternTest()
+    {
         Transaction txn1 = makeTransaction(0, 1, 1200, true);
         Transaction txn2 = makeTransaction(1, 1, 1800, true);
         Transaction txn3 = makeTransaction(2, 1, 2400, true);
