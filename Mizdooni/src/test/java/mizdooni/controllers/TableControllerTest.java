@@ -1,30 +1,42 @@
 package mizdooni.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import mizdooni.model.Restaurant;
 import mizdooni.model.Table;
+import mizdooni.model.User;
+import mizdooni.model.Address;
 import mizdooni.service.RestaurantService;
 import mizdooni.service.TableService;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
+import org.springframework.http.MediaType;
 
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import static mizdooni.controllers.ControllerUtils.PARAMS_BAD_TYPE;
+import static mizdooni.controllers.ControllerUtils.PARAMS_MISSING;
+import static org.apache.logging.log4j.ThreadContext.isEmpty;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @AutoConfigureMockMvc
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class TableControllerTest {
+@SpringBootTest
+public class TableControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+
+    final private String RESTAURANT_NOT_FOUND = "restaurant not found";
+
+    final private String TABLE_LIST = "tables listed";
 
     @MockBean
     private RestaurantService restaurantService;
@@ -32,46 +44,66 @@ class TableControllerTest {
     @MockBean
     private TableService tableService;
 
-    @Test
-    void testGetTables() throws Exception {
-        List<Table> mockTables = List.of(new Table(1, 4, 10), new Table(2, 6, 10));
-        Mockito.doNothing().when(restaurantService).restaurantExists(anyString());
-        Mockito.when(tableService.getTables(anyInt())).thenReturn(mockTables);
 
-        mockMvc.perform(get("/tables/1"))
+    @Autowired
+    private MockMvc mockMvc;
+
+    @BeforeEach
+    public void setup() {
+        Mockito.reset(restaurantService, tableService);
+    }
+
+    private void stubRestaurantServiceForavalidRestaurant(int validRestaurantId)
+    {
+        when(restaurantService.getRestaurant(validRestaurantId)).thenReturn(createRestaurant());
+    }
+
+    private Restaurant createRestaurant() {
+        Address address =  Mockito.mock(Address.class);
+        User manager = Mockito.mock(User.class);
+        return new Restaurant("name", manager, "Fast Food", LocalTime.of(9, 0), LocalTime.of(22, 0), "Test description", address, "/placeholder.jpg");
+    }
+
+    private Table createTable(int tableNumber, int restaurantId, int seatsNumber) {
+        return new Table(tableNumber, restaurantId, seatsNumber);
+    }
+
+    @Test
+    public void getTables_When_NoTable_Then_Empty() throws Exception {
+        int validRestaurantId = 1;
+        stubRestaurantServiceForavalidRestaurant(validRestaurantId);
+        when(tableService.getTables(validRestaurantId)).thenReturn(new ArrayList<>());
+
+        mockMvc.perform(get("/tables/{restaurantId}", validRestaurantId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("tables listed"))
-                .andExpect(jsonPath("$.data[0].id").value(1))
-                .andExpect(jsonPath("$.data[0].seatsNumber").value(4));
+                .andExpect(jsonPath("$.message").value(TABLE_LIST))
+                .andExpect(jsonPath("$.data.length()").value(0));
     }
 
     @Test
-    void testAddTable() throws Exception {
-        Mockito.doNothing().when(restaurantService).restaurantExists(anyString());
-        Mockito.doNothing().when(tableService).addTable(anyInt(), anyInt());
+    public void getTables_When_validSituation_Then_Successful() throws Exception {
+        int validRestaurantId = 1;
+        List<Table> tables = List.of( createTable(1, validRestaurantId, 4), createTable(2, validRestaurantId, 6));
+        stubRestaurantServiceForavalidRestaurant(validRestaurantId);
+        when(tableService.getTables(validRestaurantId)).thenReturn(tables);
 
-        mockMvc.perform(post("/tables/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"seatNumber\":\"4\"}"))
+        mockMvc.perform(get("/tables/{restaurantId}", validRestaurantId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("table added"));
+                .andExpect(jsonPath("$.message").value(TABLE_LIST))
+                .andExpect(jsonPath("$.data.length()").value(tables.size()))
+                .andExpect(jsonPath("$.data[0].tableNumber").value(tables.get(0).getTableNumber()))
+                .andExpect(jsonPath("$.data[0].seatsNumber").value(tables.get(0).getSeatsNumber()))
+                .andExpect(jsonPath("$.data[1].tableNumber").value(tables.get(1).getTableNumber()))
+                .andExpect(jsonPath("$.data[1].seatsNumber").value(tables.get(1).getSeatsNumber()));
     }
 
     @Test
-    void testAddTable_MissingSeatNumber() throws Exception {
-        mockMvc.perform(post("/tables/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("PARAMS_MISSING"));
-    }
+    public void getTables_When_nonExistingRestaurant_Then_restaurantNotFound() throws Exception {
+        int restaurantId = 999;
+        when(restaurantService.getRestaurant(restaurantId)).thenReturn(null);
 
-    @Test
-    void testAddTable_InvalidSeatNumber() throws Exception {
-        mockMvc.perform(post("/tables/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"seatNumber\":\"invalid\"}"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("PARAMS_BAD_TYPE"));
+        mockMvc.perform(get("/tables/{restaurantId}", restaurantId))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value(RESTAURANT_NOT_FOUND));
     }
 }
