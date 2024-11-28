@@ -38,6 +38,8 @@ public class TableControllerTest {
 
     final private String TABLE_LIST = "tables listed";
 
+    final private String TABLE_ADDED = "table added";
+
     @MockBean
     private RestaurantService restaurantService;
 
@@ -48,10 +50,18 @@ public class TableControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @BeforeEach
     public void setup() {
         Mockito.reset(restaurantService, tableService);
     }
+
+    private Map<String, String> makeEmptyParamForAddTable() {return Map.of();}
+
+    private Map<String, String> makeValidParamForAddTable() {return Map.of("seatsNumber", "4");}
+
+    private Map<String, String> makeInvalitTypeParamForAddTable() {return Map.of("seatsNumber", "invalid");}
 
     private void stubRestaurantServiceForavalidRestaurant(int validRestaurantId)
     {
@@ -81,7 +91,7 @@ public class TableControllerTest {
     }
 
     @Test
-    public void getTables_When_validSituation_Then_Successful() throws Exception {
+    public void getTables_When_validSituation_Then_Success() throws Exception {
         int validRestaurantId = 1;
         List<Table> tables = List.of( createTable(1, validRestaurantId, 4), createTable(2, validRestaurantId, 6));
         stubRestaurantServiceForavalidRestaurant(validRestaurantId);
@@ -103,6 +113,58 @@ public class TableControllerTest {
         when(restaurantService.getRestaurant(restaurantId)).thenReturn(null);
 
         mockMvc.perform(get("/tables/{restaurantId}", restaurantId))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value(RESTAURANT_NOT_FOUND));
+    }
+
+    @Test
+    public void addTable_When_validSituation_Then_success() throws Exception {
+        int validRestaurantId = 1;
+        Map<String, String> params = makeValidParamForAddTable();
+        stubRestaurantServiceForavalidRestaurant(validRestaurantId);
+
+        mockMvc.perform(post("/tables/{restaurantId}", validRestaurantId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(params)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value(TABLE_ADDED));
+    }
+
+    @Test
+    public void addTable_When_emptyParam_Then_parameterMissing() throws Exception {
+        int restaurantId = 1;
+        Map<String, String> params = makeEmptyParamForAddTable();
+        stubRestaurantServiceForavalidRestaurant(restaurantId);
+
+        mockMvc.perform(post("/tables/{restaurantId}", restaurantId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(params)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(PARAMS_MISSING));
+    }
+
+    @Test
+    public void addTable_When_invalidTypeParameter_Then_badTypeParam() throws Exception {
+        int restaurantId = 1;
+        Map<String, String> params = makeInvalitTypeParamForAddTable();
+        stubRestaurantServiceForavalidRestaurant(restaurantId);
+
+        mockMvc.perform(post("/tables/{restaurantId}", restaurantId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(params)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(PARAMS_BAD_TYPE));
+    }
+
+    @Test
+    public void addTable_When_NoRestaurant_Then_notFoundRestaurant() throws Exception {
+        int restaurantId = 999;
+        Map<String, String> params = makeValidParamForAddTable();
+        when(restaurantService.getRestaurant(restaurantId)).thenReturn(null);
+
+        mockMvc.perform(post("/tables/{restaurantId}", restaurantId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(params)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value(RESTAURANT_NOT_FOUND));
     }
