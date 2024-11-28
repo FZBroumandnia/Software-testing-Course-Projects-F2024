@@ -1,12 +1,15 @@
 package mizdooni.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import mizdooni.exceptions.InvalidManagerRestaurant;
+import mizdooni.exceptions.UserNotManager;
 import mizdooni.model.Restaurant;
 import mizdooni.model.Table;
 import mizdooni.model.User;
 import mizdooni.model.Address;
 import mizdooni.service.RestaurantService;
 import mizdooni.service.TableService;
+import mizdooni.service.UserService;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +28,8 @@ import java.util.Map;
 import static mizdooni.controllers.ControllerUtils.PARAMS_BAD_TYPE;
 import static mizdooni.controllers.ControllerUtils.PARAMS_MISSING;
 import static org.apache.logging.log4j.ThreadContext.isEmpty;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -36,9 +41,13 @@ public class TableControllerTest {
 
     final private String RESTAURANT_NOT_FOUND = "restaurant not found";
 
+    final private String USER_NOT_RESTAURANT_MANAGER = "The manager is not valid for this restaurant.";
+
     final private String TABLE_LIST = "tables listed";
 
     final private String TABLE_ADDED = "table added";
+
+    final private String USER_NOT_MANAGER = "User is not a manager.";
 
     @MockBean
     private RestaurantService restaurantService;
@@ -66,6 +75,11 @@ public class TableControllerTest {
     private void stubRestaurantServiceForavalidRestaurant(int validRestaurantId)
     {
         when(restaurantService.getRestaurant(validRestaurantId)).thenReturn(createRestaurant());
+    }
+
+    private User makeNotManagerUser() {
+        Address address =  Mockito.mock(Address.class);
+        return new User("name", "pass", "email", address, User.Role.client);
     }
 
     private Restaurant createRestaurant() {
@@ -167,5 +181,33 @@ public class TableControllerTest {
                         .content(objectMapper.writeValueAsString(params)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value(RESTAURANT_NOT_FOUND));
+    }
+
+    @Test
+    public void addTable_When_UserIsNotRestaurantManager_Then_notRestaurantManger() throws Exception {
+        int validRestaurantId = 1;
+        Map<String, String> params = makeValidParamForAddTable();
+        doThrow(new InvalidManagerRestaurant()).when(tableService).addTable(anyInt(), anyInt());
+        stubRestaurantServiceForavalidRestaurant(validRestaurantId);
+
+        mockMvc.perform(post("/tables/{restaurantId}", validRestaurantId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(params)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(USER_NOT_RESTAURANT_MANAGER));
+    }
+
+    @Test
+    public void addTable_When_UserRoleIsNotManager_Then_userNotManager() throws Exception {
+        int validRestaurantId = 1;
+        Map<String, String> params = makeValidParamForAddTable();
+        doThrow(new UserNotManager()).when(tableService).addTable(anyInt(), anyInt());
+        stubRestaurantServiceForavalidRestaurant(validRestaurantId);
+
+        mockMvc.perform(post("/tables/{restaurantId}", validRestaurantId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(params)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(USER_NOT_MANAGER));
     }
 }
