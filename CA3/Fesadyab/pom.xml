@@ -76,6 +76,12 @@
                         <version>1.2.1</version>
                     </dependency>
                 </dependencies>
+                <configuration>
+                    <targetClasses>domain.*</targetClasses>
+                    <targetTests>domain.*Test</targetTests>
+                    <mutationThreshold>100</mutationThreshold>
+                    <coverageThreshold>100</coverageThreshold>
+                </configuration>
             </plugin>
         </plugins>
     </build>
