@@ -17,8 +17,8 @@ public class TransactionTest {
         txn.setAmount(100);
         txn.setDebit(true);
         assertEquals(1, txn.getTransactionId());
-        assertEquals(1001, txn.getAccountId());
-        assertEquals(500, txn.getAmount());
+        assertEquals(1, txn.getAccountId());
+        assertEquals(100, txn.getAmount());
         assertTrue(txn.isDebit());
     }
 
