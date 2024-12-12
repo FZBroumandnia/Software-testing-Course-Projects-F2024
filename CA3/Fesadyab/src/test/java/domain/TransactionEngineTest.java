@@ -131,7 +131,7 @@ public class TransactionEngineTest {
     }
 
     @Test
-    public void addTransactionAndDetectFraudulentTest()
+    public void addTransactionAndDetectFraudulent_When_accepted()
     {
         Transaction txn1 = makeTransaction(0, 1, 500, true);
         Transaction txn2 = makeTransaction(1, 1, 2000, true);
@@ -141,7 +141,7 @@ public class TransactionEngineTest {
     }
 
     @Test
-    public void addTransactionAndDetectFraudulentTest_When_repeated()
+    public void addTransactionAndDetectFraudulent_When_repeated()
     {
         Transaction txn1 = makeTransaction(0, 1, 500, true);
         transactionEngine.transactionHistory.add(txn1);

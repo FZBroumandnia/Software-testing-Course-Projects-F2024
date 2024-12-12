@@ -10,7 +10,7 @@ public class TransactionTest {
     public void setUp() { transaction = new Transaction() {{ setTransactionId(0);}};}
 
     @Test
-    public void transactionInitialization_When_isDebitTrue() {
+    public void transactionInitialization_When_setAndGet() {
         Transaction txn = new Transaction();
         txn.setTransactionId(1);
         txn.setAccountId(1);
