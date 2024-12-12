@@ -93,6 +93,16 @@ public class TransactionEngineTest {
     }
 
     @Test
+    public void transactionPattern_When_TransactionUnderAndEqualThreshold()
+    {
+        Transaction txn1 = makeTransaction(1, 1, 800, true);
+        Transaction txn2 = makeTransaction(0, 1, 1000, true);
+        transactionEngine.transactionHistory.add(txn1);
+        transactionEngine.transactionHistory.add(txn2);
+        Assertions.assertEquals(0, transactionEngine.getTransactionPatternAboveThreshold(1000));
+    }
+
+    @Test
     public void detectFraudulentTransaction_When_LargeDebit()
     {
         Transaction txn1 = makeTransaction(0, 1, 500, true);
@@ -128,6 +138,14 @@ public class TransactionEngineTest {
         transactionEngine.transactionHistory.add(txn1);
         Assertions.assertEquals(1000, transactionEngine.addTransactionAndDetectFraud(txn2));
         Assertions.assertTrue(transactionEngine.transactionHistory.contains(txn2));
+    }
+
+    @Test
+    public void addTransactionAndDetectFraudulentTest_When_repeated()
+    {
+        Transaction txn1 = makeTransaction(0, 1, 500, true);
+        transactionEngine.transactionHistory.add(txn1);
+        Assertions.assertEquals(transactionEngine.addTransactionAndDetectFraud(txn1), 0);
     }
 
     @Test
