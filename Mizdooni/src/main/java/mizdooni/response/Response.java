@@ -37,4 +37,12 @@ public class Response {
     public static Response ok(String message, Object data) {
         return new Response(HttpStatus.OK, message, true, null, data);
     }
+
+    public String getMessage() {return message;}
+
+    public Object getData() {return data;}
+
+    public HttpStatus getStatus() {return status;}
+
+    public boolean isSuccess() {return success;}
 }

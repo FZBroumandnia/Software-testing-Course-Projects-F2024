@@ -77,7 +77,7 @@ public class Restaurant {
     }
 
     public int getMaxSeatsNumber() {
-        return tables.stream().map(Table::getSeatsNumber).max(Integer::compareTo).orElse(1);
+        return tables.stream().map(Table::getSeatsNumber).max(Integer::compareTo).orElse(0);
     }
 
     public List<Table> getTables() {
