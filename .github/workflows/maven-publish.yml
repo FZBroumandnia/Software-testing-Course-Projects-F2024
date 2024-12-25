@@ -24,6 +24,6 @@ jobs:
         cache: 'maven'
 
     - name: Run Maven tests
-    working-directory: CA3/Fesadyab
-    run: mvn test -B -f pom.xml
-
+      run: |
+        cd CA3/Fesadyab
+        mvn test -B -f pom.xml
