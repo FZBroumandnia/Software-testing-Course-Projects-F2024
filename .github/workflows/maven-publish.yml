@@ -23,8 +23,7 @@ jobs:
         distribution: 'oracle'
         cache: 'maven'
 
-    - name: Navigate to Fesadyab directory
-      run: cd CA3/Fesadyab
-
     - name: Run Maven tests
-      run: mvn test -B -f pom.xml
+    working-directory: CA3/Fesadyab
+    run: mvn test -B -f pom.xml
+
