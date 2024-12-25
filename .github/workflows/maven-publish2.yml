@@ -28,4 +28,4 @@ jobs:
     - name: Run Maven tests
       run: |
         cd CA3/Fesadyab
-        mvn test -B -f pom.xml
+        mvn test
