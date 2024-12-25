@@ -34,3 +34,6 @@ jobs:
       run: |
         cd CA3/Fesadyab
         mvn clean test
+
+    - name: Run Maven with Debug Output
+      run: mvn clean test -X
