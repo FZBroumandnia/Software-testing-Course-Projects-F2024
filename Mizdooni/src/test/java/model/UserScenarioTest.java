@@ -1,3 +1,4 @@
+package model;
 import io.cucumber.java.en.*;
 import mizdooni.MizdooniApplication;
 import mizdooni.model.*;
