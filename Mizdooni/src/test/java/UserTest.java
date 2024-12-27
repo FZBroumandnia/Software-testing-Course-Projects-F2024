@@ -1,5 +1,4 @@
-package mizdooni.model;
-
+import mizdooni.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.provider.CsvSource;
