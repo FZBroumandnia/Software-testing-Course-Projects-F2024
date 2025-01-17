@@ -32,7 +32,7 @@ jobs:
 
     - name: Run Tests and Generate Coverage Report
       run: |
-        cd CA3/Fesadyab
+        cd CA3
         mvn -B package --file Fesadyab/pom.xml
 
     - name: Run Maven with Debug Output
