@@ -1,0 +1,39 @@
+name: Java CI with Maven
+
+on:
+  push:
+    branches:
+      - CA5
+  pull_request:
+    branches:
+      - CA5
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v3
+      with:
+        java-version: '21'
+        distribution: 'oracle'
+        cache: 'maven'
+
+    - name: Verify Java Version
+      run: |
+        java -version
+        echo $JAVA_HOME
+        mvn --version
+
+    - name: Run Tests and Generate Coverage Report
+      run: |
+        cd CA3/Fesadyab
+        mvn -B package --file Fesadyab/pom.xml
+
+    - name: Run Maven with Debug Output
+      run: mvn clean test -X
